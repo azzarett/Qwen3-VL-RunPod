@@ -17,6 +17,8 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # PRE-DOWNLOAD THE MODEL - This makes the image larger but initialization faster
 ARG MODEL_ID=Qwen/Qwen2-VL-7B-Instruct
 ENV MODEL_ID=${MODEL_ID}
+# Disable progress bars to prevent log buffer issues during build
+ENV HF_HUB_DISABLE_PROGRESS_BARS=1
 RUN python -c "from transformers import Qwen2VLForConditionalGeneration, AutoProcessor; \
     Qwen2VLForConditionalGeneration.from_pretrained('${MODEL_ID}'); \
     AutoProcessor.from_pretrained('${MODEL_ID}')"
