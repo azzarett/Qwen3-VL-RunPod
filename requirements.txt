@@ -6,4 +6,7 @@ qwen-vl-utils
 pillow
 requests
 git+https://github.com/huggingface/transformers.git
+transformers-stream-generator
+einops
+tiktoken
 # flash-attn --no-build-isolation

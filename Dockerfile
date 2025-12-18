@@ -22,13 +22,9 @@ ENV HF_HUB_DISABLE_PROGRESS_BARS=1
 RUN python -c "import os; from transformers import AutoModelForImageTextToText, AutoProcessor; \
     model_id = os.environ.get('MODEL_ID'); \
     print(f'Downloading {model_id}...'); \
-    try: \
-        AutoModelForImageTextToText.from_pretrained(model_id, trust_remote_code=True); \
-        AutoProcessor.from_pretrained(model_id, trust_remote_code=True); \
-        print('Download complete.'); \
-    except Exception as e: \
-        print(f'Error downloading model: {e}'); \
-        exit(1)"
+    AutoModelForImageTextToText.from_pretrained(model_id, trust_remote_code=True); \
+    AutoProcessor.from_pretrained(model_id, trust_remote_code=True); \
+    print('Download complete.')"
 
 # Copy the rest of the application
 COPY . .
