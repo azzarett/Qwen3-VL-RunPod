@@ -1,7 +1,7 @@
 import os
 import torch
 import runpod
-from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
+from transformers import AutoModelForImageTextToText, AutoProcessor
 from qwen_vl_utils import process_vision_info
 
 # Environment variables
@@ -13,21 +13,23 @@ print(f"Loading model: {MODEL_ID} on {DEVICE}")
 # Load model and processor
 # Note: flash_attention_2 is recommended for performance but requires flash-attn package
 try:
-    model = Qwen2VLForConditionalGeneration.from_pretrained(
+    model = AutoModelForImageTextToText.from_pretrained(
         MODEL_ID,
         torch_dtype=torch.bfloat16,
         attn_implementation="flash_attention_2",
         device_map="auto",
+        trust_remote_code=True,
     )
 except Exception as e:
     print(f"Failed to load with flash_attention_2, falling back to default: {e}")
-    model = Qwen2VLForConditionalGeneration.from_pretrained(
+    model = AutoModelForImageTextToText.from_pretrained(
         MODEL_ID,
         torch_dtype=torch.bfloat16,
         device_map="auto",
+        trust_remote_code=True,
     )
 
-processor = AutoProcessor.from_pretrained(MODEL_ID)
+processor = AutoProcessor.from_pretrained(MODEL_ID, trust_remote_code=True)
 
 def handler(job):
     job_input = job["input"]
