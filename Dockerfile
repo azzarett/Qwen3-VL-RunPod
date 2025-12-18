@@ -12,7 +12,7 @@ COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # Install flash-attn (optional but recommended)
-RUN pip install flash-attn --no-build-isolation
+# RUN pip install flash-attn --no-build-isolation
 
 # Copy the rest of the application
 COPY . .
