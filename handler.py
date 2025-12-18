@@ -5,7 +5,7 @@ from transformers import Qwen2VLForConditionalGeneration, AutoProcessor
 from qwen_vl_utils import process_vision_info
 
 # Environment variables
-MODEL_ID = os.environ.get("MODEL_ID", "Qwen/Qwen2-VL-7B-Instruct")
+MODEL_ID = os.environ.get("MODEL_ID", "Qwen/Qwen3-VL-8B-Instruct")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 print(f"Loading model: {MODEL_ID} on {DEVICE}")

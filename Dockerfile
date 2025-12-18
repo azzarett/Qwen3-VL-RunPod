@@ -15,7 +15,7 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 # RUN pip install flash-attn --no-build-isolation
 
 # PRE-DOWNLOAD THE MODEL - This makes the image larger but initialization faster
-ARG MODEL_ID=Qwen/Qwen2-VL-7B-Instruct
+ARG MODEL_ID=Qwen/Qwen3-VL-8B-Instruct
 ENV MODEL_ID=${MODEL_ID}
 # Disable progress bars to prevent log buffer issues during build
 ENV HF_HUB_DISABLE_PROGRESS_BARS=1

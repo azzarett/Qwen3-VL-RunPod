@@ -1,39 +1,59 @@
-# RunPod Deployment for Qwen2-VL
+# RunPod Deployment for Qwen3-VL / Qwen2-VL
 
-This folder contains the necessary files to deploy Qwen2-VL on RunPod serverless or pods.
+This folder contains the necessary files to deploy Qwen3-VL (or Qwen2-VL) on RunPod serverless or pods.
 
 ## Files
 
 - `Dockerfile`: Defines the environment (PyTorch, CUDA, dependencies).
 - `requirements.txt`: Python dependencies.
 - `handler.py`: The serverless handler script.
+- `runpod_demo.sh`: Script to run the Web Demo on a RunPod Pod.
 
-## Setup
+## Option 1: RunPod Serverless
 
 1. **Build the Docker image:**
 
 ```bash
-docker build -t <your-username>/qwen2-vl-runpod:latest .
+docker build -t <your-username>/qwen-vl-runpod:latest .
 ```
 
 2. **Push to Docker Hub (or other registry):**
 
 ```bash
-docker push <your-username>/qwen2-vl-runpod:latest
+docker push <your-username>/qwen-vl-runpod:latest
 ```
 
 3. **Deploy on RunPod:**
 
 - Create a new Template on RunPod.
-- Image Name: `<your-username>/qwen2-vl-runpod:latest`
-- Container Disk: 20GB (Model is ~15GB for 7B, larger for others)
-- Volume Disk: 50GB (for caching model weights)
+- Image Name: `<your-username>/qwen-vl-runpod:latest`
+- Container Disk: 50GB (Model is ~16GB for 8B, larger for others)
+- Volume Disk: 100GB (for caching model weights)
 - Volume Mount Path: `/runpod-volume`
 - Environment Variables:
-    - `MODEL_ID`: `Qwen/Qwen2-VL-7B-Instruct` (default) or other Qwen2-VL models.
+    - `MODEL_ID`: `Qwen/Qwen3-VL-8B-Instruct` (default). You can change this to `Qwen/Qwen3-VL-2B-Instruct` for faster loading or other models.
     - `HF_TOKEN`: (Optional) If using gated models.
 
-## Usage
+## Option 2: RunPod Pod (Interactive Web Demo)
+
+If you want to run the Gradio Web Demo on a RunPod GPU instance:
+
+1. **Start a Pod** using a PyTorch template (e.g., RunPod PyTorch 2.2.0).
+2. **Clone this repository** inside the Pod.
+3. **Run the demo script:**
+
+```bash
+bash runpod_demo.sh
+```
+
+This script will:
+- Install necessary dependencies.
+- Start the Web Demo with `Qwen/Qwen3-VL-8B-Instruct` (approx. 16GB VRAM required).
+- Expose the demo on port 7860.
+
+**Note:** Ensure you have exposed port 7860 in your Pod configuration (TCP Port) or use the RunPod Proxy link.
+
+## Usage (Serverless)
 
 The handler accepts input in a format similar to OpenAI Chat Completions or a simplified format.
 
