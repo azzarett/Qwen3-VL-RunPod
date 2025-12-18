@@ -11,8 +11,15 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --upgrade pip && pip install -r requirements.txt
 
-# Install flash-attn (optional but recommended)
+# Install flash-attn (optional but recommended for speed)
 # RUN pip install flash-attn --no-build-isolation
+
+# PRE-DOWNLOAD THE MODEL - This makes the image larger but initialization faster
+ARG MODEL_ID=Qwen/Qwen2-VL-7B-Instruct
+ENV MODEL_ID=${MODEL_ID}
+RUN python -c "from transformers import Qwen2VLForConditionalGeneration, AutoProcessor; \
+    Qwen2VLForConditionalGeneration.from_pretrained('${MODEL_ID}'); \
+    AutoProcessor.from_pretrained('${MODEL_ID}')"
 
 # Copy the rest of the application
 COPY . .
