@@ -14,10 +14,10 @@ COPY requirements.txt .
 ENV PIP_PREFER_BINARY=1
 RUN pip install --upgrade pip && \
         pip uninstall -y torch torchvision torchaudio || true && \
-        pip install \
-            https://download.pytorch.org/whl/nightly/cu124/torch-2.7.0.dev20250226%2Bcu124-cp310-cp310-manylinux_2_28_x86_64.whl \
-            https://download.pytorch.org/whl/nightly/cu124/torchvision-0.22.0.dev20250226%2Bcu124-cp310-cp310-linux_x86_64.whl \
-            --no-cache-dir && \
+        pip install --pre --no-cache-dir \
+            torch==2.7.0.dev20250226+cu124 \
+            torchvision==0.22.0.dev20250226+cu124 \
+            --index-url https://download.pytorch.org/whl/nightly/cu124 && \
         pip install -r requirements.txt --no-cache-dir
 
 # Install flash-attn (optional but recommended for speed)
