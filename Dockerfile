@@ -16,9 +16,12 @@ RUN pip install --upgrade pip && pip install -r requirements.txt
 
 # PRE-DOWNLOAD THE MODEL - This makes the image larger but initialization faster
 ARG MODEL_ID=Qwen/Qwen3-VL-8B-Instruct
-ENV MODEL_ID=${MODEL_ID}
-# Disable progress bars to prevent log buffer issues during build
-ENV HF_HUB_DISABLE_PROGRESS_BARS=1
+ENV MODEL_ID=${MODEL_ID} \
+    HF_HOME=/root/.cache/huggingface \
+    HF_HUB_CACHE=/root/.cache/huggingface/hub \
+    TRANSFORMERS_CACHE=/root/.cache/huggingface/transformers \
+    HF_HUB_DISABLE_PROGRESS_BARS=1
+RUN mkdir -p /root/.cache/huggingface
 RUN python -c "import os; from transformers import AutoModelForImageTextToText, AutoProcessor; \
     model_id = os.environ.get('MODEL_ID'); \
     print(f'Downloading {model_id}...'); \
@@ -29,13 +32,8 @@ RUN python -c "import os; from transformers import AutoModelForImageTextToText, 
 # Copy the rest of the application
 COPY . .
 
-# Create volume directory structure
-RUN mkdir -p /runpod-volume/cache
-
-# Set environment variables for cache
-ENV HF_HOME="/runpod-volume/cache"
-ENV HF_HUB_CACHE="/runpod-volume/cache/hub"
-ENV TRANSFORMERS_CACHE="/runpod-volume/cache/transformers"
+# Create cache directory (already used during build)
+RUN mkdir -p /root/.cache/huggingface
 
 # Set the entrypoint
 CMD [ "python", "-u", "handler.py" ]
