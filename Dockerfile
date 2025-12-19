@@ -9,10 +9,10 @@ WORKDIR /app
 
 # Copy and install Python dependencies
 COPY requirements.txt .
-# Ensure torch wheel with sm89 (RTX 5090) support
+# Use PyTorch nightly cu124 (includes newer arch support; required for RTX 5090 sm_120)
 RUN pip install --upgrade pip && \
     pip uninstall -y torch torchvision torchaudio || true && \
-    pip install torch==2.4.1 torchvision==0.19.1 --index-url https://download.pytorch.org/whl/cu121 && \
+    pip install --pre torch torchvision torchaudio --index-url https://download.pytorch.org/whl/nightly/cu124 && \
     pip install -r requirements.txt
 
 # Install flash-attn (optional but recommended for speed)
