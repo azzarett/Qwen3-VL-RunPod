@@ -10,11 +10,15 @@ WORKDIR /app
 # Copy and install Python dependencies
 COPY requirements.txt .
 # Use PyTorch nightly cu124 (includes newer arch support; required for RTX 5090 sm_120)
+# Pin torch/vision to the same dev build to avoid resolver conflicts
 ENV PIP_PREFER_BINARY=1
 RUN pip install --upgrade pip && \
-    pip uninstall -y torch torchvision torchaudio || true && \
-    pip install --pre torch torchvision --index-url https://download.pytorch.org/whl/nightly/cu124 --no-cache-dir && \
-    pip install -r requirements.txt --no-cache-dir
+        pip uninstall -y torch torchvision torchaudio || true && \
+        pip install \
+            https://download.pytorch.org/whl/nightly/cu124/torch-2.7.0.dev20250226%2Bcu124-cp310-cp310-manylinux_2_28_x86_64.whl \
+            https://download.pytorch.org/whl/nightly/cu124/torchvision-0.22.0.dev20250226%2Bcu124-cp310-cp310-linux_x86_64.whl \
+            --no-cache-dir && \
+        pip install -r requirements.txt --no-cache-dir
 
 # Install flash-attn (optional but recommended for speed)
 # RUN pip install flash-attn --no-build-isolation
