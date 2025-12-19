@@ -1,6 +1,7 @@
 runpod
-torch>=2.1.0
-torchvision
+# torch/torchvision pinned in Dockerfile to 2.4.1/cu121 with sm89 support
+torch==2.4.1
+torchvision==0.19.1
 accelerate>=0.26.0
 qwen-vl-utils
 pillow

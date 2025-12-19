@@ -6,36 +6,30 @@ from qwen_vl_utils import process_vision_info
 
 # Environment variables
 MODEL_ID = os.environ.get("MODEL_ID", "Qwen/Qwen3-VL-8B-Instruct")
-DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-# Select safe dtype for the GPU (T4/A10 do not support bf16)
-if DEVICE == "cuda" and torch.cuda.is_bf16_supported():
-    TORCH_DTYPE = torch.bfloat16
-elif DEVICE == "cuda":
-    TORCH_DTYPE = torch.float16
-else:
-    TORCH_DTYPE = torch.float32
+# Require CUDA (5090 GPUs); fail fast if unavailable
+if not torch.cuda.is_available():
+    raise RuntimeError("CUDA is not available but GPU is required (RTX 5090 nodes).")
+
+DEVICE = "cuda"
+TORCH_DTYPE = torch.float16  # fp16 for maximum compatibility; 5090 supports bf16 but fp16 is safer with older kernels
 
 print(f"Loading model: {MODEL_ID} on {DEVICE} with dtype {TORCH_DTYPE}")
 
-# Load model and processor (avoid flash_attention_2 to prevent kernel issues)
+def load_model(attn_impl: str):
+    return AutoModelForImageTextToText.from_pretrained(
+        MODEL_ID,
+        torch_dtype=TORCH_DTYPE,
+        attn_implementation=attn_impl,
+        device_map="auto",
+        trust_remote_code=True,
+    )
+
 try:
-    model = AutoModelForImageTextToText.from_pretrained(
-        MODEL_ID,
-        torch_dtype=TORCH_DTYPE,
-        attn_implementation="sdpa",  # safe default
-        device_map="auto",
-        trust_remote_code=True,
-    )
-except Exception as e:
-    print(f"Failed to load with sdpa, falling back to eager: {e}")
-    model = AutoModelForImageTextToText.from_pretrained(
-        MODEL_ID,
-        torch_dtype=TORCH_DTYPE,
-        attn_implementation="eager",
-        device_map="auto",
-        trust_remote_code=True,
-    )
+    model = load_model("sdpa")
+except RuntimeError as e:
+    print(f"Failed to load with sdpa on CUDA: {e}. Retrying with eager.")
+    model = load_model("eager")
 
 processor = AutoProcessor.from_pretrained(MODEL_ID, trust_remote_code=True)
 
