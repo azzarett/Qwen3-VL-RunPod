@@ -8,23 +8,31 @@ from qwen_vl_utils import process_vision_info
 MODEL_ID = os.environ.get("MODEL_ID", "Qwen/Qwen3-VL-8B-Instruct")
 DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
-print(f"Loading model: {MODEL_ID} on {DEVICE}")
+# Select safe dtype for the GPU (T4/A10 do not support bf16)
+if DEVICE == "cuda" and torch.cuda.is_bf16_supported():
+    TORCH_DTYPE = torch.bfloat16
+elif DEVICE == "cuda":
+    TORCH_DTYPE = torch.float16
+else:
+    TORCH_DTYPE = torch.float32
 
-# Load model and processor
-# Note: flash_attention_2 is recommended for performance but requires flash-attn package
+print(f"Loading model: {MODEL_ID} on {DEVICE} with dtype {TORCH_DTYPE}")
+
+# Load model and processor (avoid flash_attention_2 to prevent kernel issues)
 try:
     model = AutoModelForImageTextToText.from_pretrained(
         MODEL_ID,
-        torch_dtype=torch.bfloat16,
-        attn_implementation="flash_attention_2",
+        torch_dtype=TORCH_DTYPE,
+        attn_implementation="sdpa",  # safe default
         device_map="auto",
         trust_remote_code=True,
     )
 except Exception as e:
-    print(f"Failed to load with flash_attention_2, falling back to default: {e}")
+    print(f"Failed to load with sdpa, falling back to eager: {e}")
     model = AutoModelForImageTextToText.from_pretrained(
         MODEL_ID,
-        torch_dtype=torch.bfloat16,
+        torch_dtype=TORCH_DTYPE,
+        attn_implementation="eager",
         device_map="auto",
         trust_remote_code=True,
     )
