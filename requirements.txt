@@ -2,6 +2,7 @@ runpod
 # torch/torchvision installed in Dockerfile (nightly cu124 for sm_120); do not reinstall here
 # torch
 # torchvision
+# torchaudio
 accelerate>=0.26.0
 qwen-vl-utils
 pillow
