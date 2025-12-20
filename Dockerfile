@@ -7,7 +7,6 @@ RUN apt-get update && apt-get install -y \
     libgl1 libglib2.0-0 poppler-utils tesseract-ocr git wget build-essential cmake ffmpeg && \
     ln -s /usr/bin/python3.10 /usr/bin/python && \
     rm -rf /var/lib/apt/lists/*
-    rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
