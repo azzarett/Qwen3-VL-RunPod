@@ -1,20 +1,25 @@
-FROM pytorch/pytorch:nightly-devel-cuda12.4-cudnn9
+FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
 
 # Install system dependencies
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
-    libgl1 libglib2.0-0 poppler-utils tesseract-ocr git wget build-essential python3-dev cmake ffmpeg && \
+    python3.10 python3.10-dev python3-pip \
+    libgl1 libglib2.0-0 poppler-utils tesseract-ocr git wget build-essential cmake ffmpeg && \
+    ln -s /usr/bin/python3.10 /usr/bin/python && \
+    rm -rf /var/lib/apt/lists/*
     rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
 # Copy and install Python dependencies
 COPY requirements.txt .
-# Base image already has nightly torch installed.
-# We just install other requirements.
+# Install PyTorch Nightly for RTX 5090 (sm_120) support
+# Workaround for broken nightly dependency graph: install torch first, then torchvision without deps
 ENV PIP_PREFER_BINARY=1
 RUN pip install --upgrade pip && \
-        pip install -r requirements.txt --no-cache-dir
+    pip install --pre --no-cache-dir torch --index-url https://download.pytorch.org/whl/nightly/cu124 && \
+    pip install --pre --no-cache-dir --no-deps torchvision --index-url https://download.pytorch.org/whl/nightly/cu124 && \
+    pip install -r requirements.txt --no-cache-dir
 
 # Install flash-attn (optional but recommended for speed)
 # RUN pip install flash-attn --no-build-isolation
