@@ -1,6 +1,7 @@
-FROM runpod/pytorch:2.2.0-py3.10-cuda12.1.1-devel-ubuntu22.04
+FROM pytorch/pytorch:nightly-devel-cuda12.4-cudnn9
 
 # Install system dependencies
+ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     libgl1 libglib2.0-0 poppler-utils tesseract-ocr git wget build-essential python3-dev cmake ffmpeg && \
     rm -rf /var/lib/apt/lists/*
@@ -9,13 +10,10 @@ WORKDIR /app
 
 # Copy and install Python dependencies
 COPY requirements.txt .
-# Use PyTorch nightly cu124 (includes newer arch support; required for RTX 5090 sm_120)
-# Pin torch/vision to the same dev build to avoid resolver conflicts
+# Base image already has nightly torch installed.
+# We just install other requirements.
 ENV PIP_PREFER_BINARY=1
 RUN pip install --upgrade pip && \
-        pip uninstall -y torch torchvision torchaudio || true && \
-        pip install --pre --no-cache-dir torch==2.7.0.dev20250310+cu124 --index-url https://download.pytorch.org/whl/nightly/cu124 && \
-        pip install --pre --no-cache-dir --no-deps torchvision==0.22.0.dev20250226+cu124 --index-url https://download.pytorch.org/whl/nightly/cu124 && \
         pip install -r requirements.txt --no-cache-dir
 
 # Install flash-attn (optional but recommended for speed)
