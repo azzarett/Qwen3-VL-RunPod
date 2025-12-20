@@ -15,8 +15,8 @@ ENV PIP_PREFER_BINARY=1
 RUN pip install --upgrade pip && \
         pip uninstall -y torch torchvision torchaudio || true && \
         pip install --pre --no-cache-dir \
-            torch==2.7.0.dev20250226+cu124 \
-            torchvision==0.22.0.dev20250226+cu124 \
+            torch==2.7.0.dev20250310+cu124 \
+            torchvision==0.22.0.dev20250310+cu124 \
             --index-url https://download.pytorch.org/whl/nightly/cu124 && \
         pip install -r requirements.txt --no-cache-dir
 
