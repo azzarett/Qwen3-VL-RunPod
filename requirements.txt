@@ -7,6 +7,7 @@ accelerate>=0.26.0
 qwen-vl-utils
 pillow
 requests
+pdf2image
 git+https://github.com/huggingface/transformers.git
 transformers-stream-generator
 einops

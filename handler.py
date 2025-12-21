@@ -1,6 +1,11 @@
 import os
 import torch
 import runpod
+import requests
+import base64
+from io import BytesIO
+from PIL import UnidentifiedImageError
+from pdf2image import convert_from_bytes
 from transformers import AutoModelForImageTextToText, AutoProcessor
 from qwen_vl_utils import process_vision_info
 
@@ -45,6 +50,67 @@ except RuntimeError as e:
     model = load_model("eager")
 
 processor = AutoProcessor.from_pretrained(MODEL_ID, trust_remote_code=True)
+
+def expand_pdf_inputs(messages):
+    """
+    Detects PDF inputs (URL or base64) in messages and converts them to PIL images.
+    Returns a new list of messages with PDFs expanded into images.
+    """
+    new_messages = []
+    for msg in messages:
+        new_content = []
+        if isinstance(msg.get("content"), list):
+            for item in msg["content"]:
+                if item.get("type") == "image":
+                    img_str = item.get("image", "")
+                    pdf_data = None
+                    
+                    # Check for PDF URL
+                    if isinstance(img_str, str) and (img_str.lower().endswith(".pdf") or ".pdf?" in img_str.lower()):
+                        try:
+                            print(f"Downloading PDF from: {img_str}")
+                            response = requests.get(img_str)
+                            response.raise_for_status()
+                            pdf_data = response.content
+                        except Exception as e:
+                            print(f"Failed to download PDF: {e}")
+                            # Keep original item to let downstream fail or handle
+                            new_content.append(item)
+                            continue
+
+                    # Check for base64 PDF
+                    elif isinstance(img_str, str) and img_str.startswith("data:application/pdf;base64,"):
+                        try:
+                            print("Decoding base64 PDF")
+                            base64_data = img_str.split("base64,")[1]
+                            pdf_data = base64.b64decode(base64_data)
+                        except Exception as e:
+                            print(f"Failed to decode base64 PDF: {e}")
+                            new_content.append(item)
+                            continue
+                    
+                    if pdf_data:
+                        try:
+                            print("Converting PDF to images...")
+                            images = convert_from_bytes(pdf_data)
+                            print(f"Converted PDF to {len(images)} images.")
+                            for page_img in images:
+                                new_content.append({"type": "image", "image": page_img})
+                        except Exception as e:
+                            print(f"Error converting PDF with pdf2image: {e}")
+                            new_content.append(item)
+                    else:
+                        new_content.append(item)
+                else:
+                    new_content.append(item)
+            
+            # Create new message with updated content
+            new_msg = msg.copy()
+            new_msg["content"] = new_content
+            new_messages.append(new_msg)
+        else:
+            new_messages.append(msg)
+    return new_messages
 
 def handler(job):
     job_input = job["input"]
@@ -91,11 +157,30 @@ def handler(job):
             }
         ]
 
+    # Expand PDFs if any
+    messages = expand_pdf_inputs(messages)
+
     # Preparation for inference
     text = processor.apply_chat_template(
         messages, tokenize=False, add_generation_prompt=True
     )
-    image_inputs, video_inputs = process_vision_info(messages)
+    try:
+        image_inputs, video_inputs = process_vision_info(messages)
+    except UnidentifiedImageError as e:
+        print(f"Error identifying image: {e}")
+        # Log details about images to help debugging
+        for msg in messages:
+            if isinstance(msg.get("content"), list):
+                for item in msg["content"]:
+                    if item.get("type") == "image":
+                        img = item.get("image", "")
+                        if isinstance(img, str):
+                            if img.startswith("data:image"):
+                                print(f"Image (base64) length: {len(img)}")
+                                print(f"Image (base64) prefix: {img[:50]}...")
+                            else:
+                                print(f"Image URL: {img}")
+        return {"error": f"Failed to process image. The image data might be corrupted or in an unsupported format. Error: {str(e)}"}
     
     inputs = processor(
         text=[text],
