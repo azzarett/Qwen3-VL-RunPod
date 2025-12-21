@@ -34,6 +34,24 @@ docker push <your-username>/qwen-vl-runpod:latest
     - `MODEL_ID`: `Qwen/Qwen3-VL-8B-Instruct` (default). You can change this to `Qwen/Qwen3-VL-2B-Instruct` for faster loading or other models.
     - `HF_TOKEN`: (Optional) If using gated models.
 
+### GPU/CUDA compatibility
+
+This image uses stable PyTorch CUDA 12.1 to maximize compatibility across common RunPod GPUs (T4/V100/A10/30xx/40xx/L4). If you see a runtime error like:
+
+```
+RuntimeError: CUDA error: no kernel image is available for execution on the device
+```
+
+it typically means the PyTorch build inside the image doesn’t include kernels for the GPU assigned to your job. Rebuild locally (or in CI) and redeploy:
+
+```bash
+# Rebuild and push
+docker build -t <your-username>/qwen-vl-runpod:latest .
+docker push <your-username>/qwen-vl-runpod:latest
+```
+
+At startup, the server logs will print the GPU name, compute capability, and the Torch/CUDA versions to help diagnose mismatches.
+
 ## Option 2: RunPod Pod (Interactive Web Demo)
 
 If you want to run the Gradio Web Demo on a RunPod GPU instance:

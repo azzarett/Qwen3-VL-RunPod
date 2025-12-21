@@ -14,7 +14,20 @@ if not torch.cuda.is_available():
 DEVICE = "cuda"
 TORCH_DTYPE = torch.float16  # fp16 for maximum compatibility; 5090 supports bf16 but fp16 is safer with older kernels
 
+def _print_cuda_env():
+    try:
+        dev_idx = torch.cuda.current_device() if torch.cuda.is_available() else None
+        name = torch.cuda.get_device_name(dev_idx) if dev_idx is not None else "CPU"
+        cap = torch.cuda.get_device_capability(dev_idx) if dev_idx is not None else (0, 0)
+        print(
+            f"CUDA available={torch.cuda.is_available()} | device={name} | capability=sm_{cap[0]}{cap[1]} | "
+            f"torch={torch.__version__} | torch.cuda={getattr(torch.version, 'cuda', 'n/a')}"
+        )
+    except Exception as e:
+        print(f"[warn] Failed to query CUDA env: {e}")
+
 print(f"Loading model: {MODEL_ID} on {DEVICE} with dtype {TORCH_DTYPE}")
+_print_cuda_env()
 
 def load_model(attn_impl: str):
     return AutoModelForImageTextToText.from_pretrained(

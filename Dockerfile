@@ -1,4 +1,4 @@
-FROM nvidia/cuda:12.4.1-cudnn-devel-ubuntu22.04
+FROM nvidia/cuda:12.1.1-cudnn-devel-ubuntu22.04
 
 # Install system dependencies
 ENV DEBIAN_FRONTEND=noninteractive
@@ -12,12 +12,12 @@ WORKDIR /app
 
 # Copy and install Python dependencies
 COPY requirements.txt .
-# Install PyTorch Nightly for RTX 5090 (sm_120) support
-# Workaround for broken nightly dependency graph: install torch first, then torchvision without deps
+# Install stable PyTorch with CUDA 12.1 for broad GPU compatibility (T4/V100/A10/30xx/40xx/L4)
+# Pin matched torchvision to avoid ABI mismatches
 ENV PIP_PREFER_BINARY=1
 RUN pip install --upgrade pip && \
-    pip install --pre --no-cache-dir torch --index-url https://download.pytorch.org/whl/nightly/cu124 && \
-    pip install --pre --no-cache-dir --no-deps torchvision --index-url https://download.pytorch.org/whl/nightly/cu124 && \
+    pip install --no-cache-dir --index-url https://download.pytorch.org/whl/cu121 \
+        torch==2.4.1+cu121 torchvision==0.19.1+cu121 && \
     pip install -r requirements.txt --no-cache-dir
 
 # Install flash-attn (optional but recommended for speed)
